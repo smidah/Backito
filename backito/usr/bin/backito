@@ -1,0 +1,86 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+import sys, os, shutil, getpass, logging
+from shutil import copytree, copyfile
+from crontab import CronTab
+from funcs import remove_dir, make_dir, rec_backup
+
+# Error
+if len(sys.argv) == 1:
+    print ("Usage: backito /absolute/path TIMING")
+    print ("       backito update [REV]")
+    print "APath: {"+os.path.abspath(".")+"}"
+    sys.exit(0)
+elif len(sys.argv) < 3 and sys.argv[1] != "update":
+    print ("Usage: backito /absolute/path TIMING")
+    print ("       backito update [REV]")
+    print "APath: {"+os.path.abspath(".")+"}"
+    sys.exit(0)
+elif  (sys.argv[1] != "update") and (sys.argv[2].isdigit() == False or sys.argv[2] > 24 == True or sys.argv[2] < 1 == True):
+    print ("Usage: backito /absolute/path TIMING")
+    print ("       backito update [REV]")
+    sys.exit(0)
+elif not os.path.isabs(sys.argv[1]) and sys.argv[1] != "update":
+    print ("Usage: backito /absolute/path TIMING")
+    print ("       backito update [REV]")
+    sys.exit(0)
+else:
+    if not os.path.isdir("/home/"+getpass.getuser()+"/backup"):
+        os.makedirs("/home/"+getpass.getuser()+"/backup")
+
+# Get File
+if  sys.argv[1][len(sys.argv[1]) - 1] != '/':
+    filename = sys.argv[1]
+else:
+    filename = sys.argv[1][:-1]
+
+#
+backupfolder = "/home/"+getpass.getuser()+"/backup/Backup_" + filename.rsplit('/', 1)[-1]
+if sys.argv[1] != "update":
+    hour = sys.argv[2]
+if not os.path.isdir(backupfolder) and sys.argv[1] != 'update':
+    os.makedirs(backupfolder)
+
+backupfolder = backupfolder + "/" + filename.rsplit('/', 1)[-1]
+
+#update
+
+if sys.argv[1] == "update":
+    filename = os.path.abspath('.')
+    if filename[len(filename) - 1] == '/':
+        filename = filename[:-1]
+    backupfolder = "/home/"+getpass.getuser()+"/backup/Backup_" + filename.rsplit('/', 1)[-1]+"/"+filename.rsplit('/',1)[-1]
+    rec_backup(backupfolder, filename)
+    if os.path.isdir(backupfolder) == True:
+        remove_dir(backupfolder, filename)
+    sys.exit(0)
+
+# Copy
+if os.path.isdir(filename) == 1:
+    if os.path.isdir(backupfolder):
+        shutil.rmtree(backupfolder)
+        copytree(filename, backupfolder)
+    else:
+        copytree(filename, backupfolder)
+elif os.path.isfile(filename) == 1:
+    copyfile(filename, backupfolder)
+else:
+    sys.exit(0)
+
+# LogFile
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
+fh = logging.FileHandler('/home/'+getpass.getuser()+'/backup/.backito')
+fh.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+fh.setFormatter(formatter)
+logger.addHandler(fh)
+logger.info('Success Backup : ['+filename+'] - Timing: '+hour)
+
+##
+cron   = CronTab()
+job  = cron.new(command='rec.py '+filename.rsplit('/', 1)[-1]+' >> '+backupfolder+'_logs.txt')
+job.setall(1, '*/'+hour,None,None,None)
+cron.write(user=getpass.getuser())
+## 

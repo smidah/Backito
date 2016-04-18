@@ -1,0 +1,9 @@
+#!/bin/bash
+
+apt-get install sshpass
+apt-get install python-pip
+pip install python-crontab
+apt-get remove backito
+dpkg-deb --build backito
+dpkg -i backito.deb
+rm backito.deb

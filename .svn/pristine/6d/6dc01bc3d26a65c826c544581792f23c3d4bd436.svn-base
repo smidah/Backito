@@ -1,0 +1,9 @@
+Package: Backito
+Version: 3.0
+Section: Python
+Priority: optional
+Architecture: all
+Depends: python
+Maintainer: M.Y <mesbat_y@etna-alternance.net>
+Description: BackUp System (Backito)
+Homepage: http://google.fr

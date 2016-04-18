@@ -1,0 +1,4 @@
+#!/bin/sh
+
+echo "Installaction Complete!"
+echo "Usage: backito [absolute path] [backup timing in hour]"
